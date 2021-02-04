@@ -12,5 +12,6 @@ python-string-utils
 pyyaml
 requests
 scikit-learn
+setuptools
 srsly
 tqdm
