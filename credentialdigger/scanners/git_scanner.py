@@ -1,6 +1,7 @@
 import hashlib
 import re
 import shutil
+import time
 from datetime import datetime, timezone
 
 import hyperscan
@@ -88,7 +89,7 @@ class GitScanner(BaseScanner):
                     # We have reached the (chosen) oldest timestamp, so
                     # continue with another branch
                     break
-
+                time1 = time.perf_counter()
                 # if not prev_commit, then curr_commit is the newest commit
                 # (and we have nothing to diff with).
                 # But we will diff the first commit with NULL_TREE here to
@@ -121,6 +122,9 @@ class GitScanner(BaseScanner):
                 discoveries = discoveries + self._diff_worker(diff,
                                                               prev_commit)
                 prev_commit = curr_commit
+                time2 = time.perf_counter()
+                print(
+                    f'Finished commit scan in {round(time2-time1, 4)} seconds.')
 
             # Handling the first commit (either from since_timestamp or the
             # oldest).
