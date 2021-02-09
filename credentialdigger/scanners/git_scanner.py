@@ -1,6 +1,7 @@
 import hashlib
 import re
 import shutil
+import statistics
 import time
 from datetime import datetime, timezone
 
@@ -9,6 +10,10 @@ from git import NULL_TREE
 from git import Repo as GitRepo
 
 from .base_scanner import BaseScanner
+
+
+def rn(t2, t1=0):
+    return f"{round(t2 - t1, 4)} seconds"
 
 
 class GitScanner(BaseScanner):
@@ -70,13 +75,22 @@ class GitScanner(BaseScanner):
             A list of discoveries (dictionaries). If there are no discoveries
             return an empty list
         """
+        t1_clone = time.perf_counter()
         project_path = self.clone_git_repo(git_url)
+        t2_clone = time.perf_counter()
         repo = GitRepo(project_path)
 
         already_searched = set()
         discoveries = []
 
         branches = repo.remotes.origin.fetch()
+
+        t_diffhash = []
+        t_diff = []
+        t_worker = []
+        t_commit = []
+        n_commits = 0
+        n_branches = len(branches)
 
         for remote_branch in branches:
             branch_name = remote_branch.name
@@ -89,7 +103,8 @@ class GitScanner(BaseScanner):
                     # We have reached the (chosen) oldest timestamp, so
                     # continue with another branch
                     break
-                time1 = time.perf_counter()
+                t1_commit = time.perf_counter()
+                n_commits += 1
                 # if not prev_commit, then curr_commit is the newest commit
                 # (and we have nothing to diff with).
                 # But we will diff the first commit with NULL_TREE here to
@@ -97,6 +112,7 @@ class GitScanner(BaseScanner):
                 # This is useful for git merge: in case of a merge, we have the
                 # same commits (prev and current) in two different branches.
                 # This trick avoids scanning twice the same commits
+                t1_diffhash = time.perf_counter()
                 diff_hash = hashlib.md5((str(prev_commit) + str(curr_commit))
                                         .encode('utf-8')).digest()
                 if not prev_commit:
@@ -107,24 +123,18 @@ class GitScanner(BaseScanner):
                     prev_commit = curr_commit
                     continue
                 else:
-                    # Get the diff between two commits
-                    # Ignore possible submodules (they are independent from
-                    # this repo)
-                    diff = curr_commit.diff(prev_commit,
-                                            create_patch=True,
-                                            ignore_submodules='all',
-                                            ignore_all_space=True,
-                                            unified=0,
-                                            diff_filter='AM')
-                # Avoid searching the same diffs
-                already_searched.add(diff_hash)
-                # Diff between the current commit and the previous one
-                discoveries = discoveries + self._diff_worker(diff,
-                                                              prev_commit)
+                    # Avoid searching the same diffs
+                    already_searched.add(diff_hash)
+                t2_diffhash = time.perf_counter()
+
+                self._scan_commit(curr_commit, prev_commit,
+                                  discoveries, t_diff, t_worker)
+
                 prev_commit = curr_commit
-                time2 = time.perf_counter()
-                print(
-                    f'Finished commit scan in {round(time2-time1, 4)} seconds.')
+
+                t2_commit = time.perf_counter()
+                t_commit.append(t2_commit-t1_commit)
+                t_diffhash.append(t2_diffhash-t1_diffhash)
 
             # Handling the first commit (either from since_timestamp or the
             # oldest).
@@ -140,14 +150,43 @@ class GitScanner(BaseScanner):
 
                 discoveries = discoveries + self._diff_worker(diff,
                                                               prev_commit)
-
         # Delete repo folder
         shutil.rmtree(project_path)
+
+        print(
+            f"# branches: {n_branches}, # commits: {n_commits}.\n\n"
+            f"Clone repo - {rn(t2_clone-t1_clone)}.\n"
+            f"Scan commits - {rn(sum(t_commit))}, mean: {rn(statistics.mean(t_commit))}, variance: {rn(statistics.variance(t_commit))}\n\n"
+            f"Diff hash - mean: {rn(statistics.mean(t_diffhash))}, variance: {rn(statistics.variance(t_diffhash))}.\n"
+            f"Diff - mean: {rn(statistics.mean(t_diff))}, variance: {rn(statistics.variance(t_diff))}.\n"
+            f"Worker - mean: {rn(statistics.mean(t_worker))}, variance: {rn(statistics.variance(t_worker))}.\n"
+        )
 
         now_timestamp = int(datetime.now(timezone.utc).timestamp())
         # Generate a list of discoveries and return it.
         # N.B.: This may become inefficient when the discoveries are many.
         return now_timestamp, discoveries
+
+    def _scan_commit(self, curr_commit, prev_commit, discoveries, t_diff, t_worker):
+        t1_diff = time.perf_counter()
+        # Get the diff between two commits
+        # Ignore possible submodules (they are independent from
+        # this repo)
+        diff = curr_commit.diff(prev_commit,
+                                create_patch=True,
+                                ignore_submodules='all',
+                                ignore_all_space=True,
+                                unified=0,
+                                diff_filter='AM')
+        t2_diff = time.perf_counter()
+
+        t1_worker = time.perf_counter()
+        # Diff between the current commit and the previous one
+        discoveries.extend(self._diff_worker(diff, prev_commit))
+        t2_worker = time.perf_counter()
+
+        t_diff.append(t2_diff-t1_diff)
+        t_worker.append(t2_worker-t1_worker)
 
     def _diff_worker(self, diff, commit):
         """ Compute the diff between two commits.
