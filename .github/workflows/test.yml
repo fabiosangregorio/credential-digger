@@ -1,0 +1,56 @@
+name: test
+
+on: push
+  # push:
+  #   branches:
+  #   - master
+  # pull_request:
+  #   types: [opened, synchronize, repoened, edited]
+
+jobs:
+  install:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@master 
+        
+    # - name: Hack act
+    #   run: |
+    #     if [ ! -f "/etc/lsb-release" ] ; then
+    #       echo "DISTRIB_RELEASE=18.04" > /etc/lsb-release
+    #     fi
+
+    - name: Set up Python 3.8
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.8
+
+    - name: Install OS dependencies
+      run: |
+        sudo apt install -y build-essential python3-dev libhyperscan-dev
+      
+    - name: Cache python dependencies
+      uses: actions/cache@v1
+      with:
+        path: ~/.cache/pip # This path is specific to Ubuntu
+        key: ${{ runner.os }}-pip-${{ hashFiles('./requirements.txt') }}-${{ hashFiles('./tests/tests-requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+
+    - name: Install python dependencies
+      run: |
+        pip install -r ./requirements.txt
+        pip install -r ./tests/tests-requirements.txt
+    
+  unit_tests:
+    needs: install
+    steps:
+      - name: Run unit tests
+        run: |
+          pytest tests/unit_tests
+      
+  integration_tests:
+    needs: install
+    steps:
+      - name: Run integration tests
+        run: |
+          pytest tests/integration_tests
