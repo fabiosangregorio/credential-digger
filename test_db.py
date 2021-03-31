@@ -1,3 +1,5 @@
+import os
+
 from psycopg2 import connect
 
 db = connect(dbname=os.getenv('POSTGRES_DB'),
