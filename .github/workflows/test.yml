@@ -8,17 +8,24 @@ on: push
   #   types: [opened, synchronize, repoened, edited]
 
 jobs:
-  install:
+  tests:
     runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres
+        env:
+          POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+          POSTGRES_DB: credential_digger_tests
+        options: >-
+          -v ./sql:/docker-entrypoint-initdb.d/
+        ports:
+          - 5432:5432
+
     steps:
     - uses: actions/checkout@master 
         
-    # - name: Hack act
-    #   run: |
-    #     if [ ! -f "/etc/lsb-release" ] ; then
-    #       echo "DISTRIB_RELEASE=18.04" > /etc/lsb-release
-    #     fi
-
     - name: Set up Python 3.8
       uses: actions/setup-python@v2
       with:
@@ -48,3 +55,15 @@ jobs:
     - name: Run integration tests
       run: |
         pytest tests/integration_tests
+
+    - name: Run functional tests
+      env: 
+        POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
+        POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+        POSTGRES_DB: credential_digger_tests
+        DBHOST: localhost 
+        DBPORT: 5432
+        path_model: https://github.com/SAP/credential-digger/releases/download/PM-v1.0.1/path_model-1.0.1.tar.gz
+        snippet_model: https://github.com/SAP/credential-digger/releases/download/SM-v1.0.0/snippet_model-1.0.0.tar.gz
+      run: |
+        pytest tests/functional_tests
