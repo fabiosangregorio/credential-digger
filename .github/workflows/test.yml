@@ -11,6 +11,10 @@ jobs:
   tests:
     runs-on: ubuntu-latest
 
+    strategy:
+      matrix:
+        python-version: [3.6, 3.7, 3.8]
+
     services:
       postgres:
         image: postgres
@@ -19,17 +23,17 @@ jobs:
           POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
           POSTGRES_DB: credential_digger_tests
         options: >-
-          -v ${{ GITHUB_WORKSPACE }}/sql:/docker-entrypoint-initdb.d/
+          -v ${{ env.GITHUB_WORKSPACE }}/sql:/docker-entrypoint-initdb.d/
         ports:
           - 5432:5432
 
     steps:
     - uses: actions/checkout@master 
         
-    - name: Set up Python 3.8
+    - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v2
       with:
-        python-version: 3.8
+        python-version: ${{ matrix.python-version }}
 
     - name: Install OS dependencies
       run: |
