@@ -22,7 +22,7 @@ jobs:
           POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
           POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
           POSTGRES_DB: credential_digger_tests
-        options: >-
+        options:
           -v ${{ env.GITHUB_WORKSPACE }}/sql:/docker-entrypoint-initdb.d/
         ports:
           - 5432:5432
