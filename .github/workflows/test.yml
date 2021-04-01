@@ -26,6 +26,7 @@ jobs:
           DBPORT: 5432
         options:
           -v ${{ github.workspace }}/sql:/docker-entrypoint-initdb.d/
+          -v creddig_db:/var/lib/postgresql/data
         ports:
           - 5432:5432
 
