@@ -42,6 +42,9 @@ jobs:
     - name: temp | install postgres
       run: pip install psycopg2-binary
 
+    - name: temp | check postgres running
+      run: pgrep -u postgres -fa -- -D
+
     - name: temp | check connection to postgres
       run: python test_db.py
       env:
