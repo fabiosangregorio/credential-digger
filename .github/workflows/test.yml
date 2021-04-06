@@ -73,14 +73,6 @@ jobs:
         python -m credentialdigger download path_model
         python -m credentialdigger download snippet_model
 
-    - name: Cache credentialdigger's models
-      uses: actions/cache@v1
-      with:
-        path: ./credentialdigger/models_data # This path is specific to Ubuntu
-        key: ${{ runner.os }}-ML-${{ hashFiles('./credentialdigger/models_data/**') }}
-        restore-keys: |
-          ${{ runner.os }}-ML-
-
     - name: Run unit tests
       run: |
         pytest tests/unit_tests
