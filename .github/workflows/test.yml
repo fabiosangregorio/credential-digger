@@ -24,14 +24,16 @@ jobs:
           POSTGRES_DB: credential_digger_tests
           DBHOST: localhost 
           DBPORT: 5432
-        options:
-          -v ${{ github.workspace }}/sql:/docker-entrypoint-initdb.d/
         ports:
           - 5432:5432
 
     steps:
     - uses: actions/checkout@master 
         
+    - name: Create PostgreSQL database
+      run: |
+        psql ${{ secrets.POSTGRES_USER }} -d credential_digger_tests -f sql/create_table.sql
+
     # - name: Set up Python ${{ matrix.python-version }}
     - name: Set up Python 3.8
       uses: actions/setup-python@v2
