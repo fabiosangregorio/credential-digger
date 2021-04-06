@@ -32,7 +32,7 @@ jobs:
         
     - name: Create PostgreSQL database
       run: |
-        PGPASSWORD=${{ secrets.POSTGRES_PASSWORD }} -U psql ${{ secrets.POSTGRES_USER }} -h 127.0.0.1 -p 5432 -d credential_digger_tests -f sql/create_table.sql
+        PGPASSWORD=${{ secrets.POSTGRES_PASSWORD }} psql -U ${{ secrets.POSTGRES_USER }} -h 127.0.0.1 -p 5432 -d credential_digger_tests -f sql/create_table.sql
 
     # - name: Set up Python ${{ matrix.python-version }}
     - name: Set up Python 3.8
