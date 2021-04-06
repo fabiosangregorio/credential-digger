@@ -58,7 +58,7 @@ jobs:
     
     - name: Install credentialdigger
       run: |
-        python setup.py install
+        python setup.py install --user
 
     - name: Download and link credentialdigger's models
       env:
