@@ -72,7 +72,7 @@ jobs:
       uses: actions/cache@v1
       with:
         path: ./credentialdigger/models_data # This path is specific to Ubuntu
-        key: ${{ runner.os }}-ML-${{ hashFiles('./'credentialdigger/models_data/**') }}
+        key: ${{ runner.os }}-ML-${{ hashFiles('./credentialdigger/models_data/**') }}
         restore-keys: |
           ${{ runner.os }}-ML-
 
