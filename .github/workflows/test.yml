@@ -19,8 +19,8 @@ jobs:
       postgres:
         image: postgres
         env:
-          POSTGRES_USER: '${{ secrets.POSTGRES_USER }}'
-          POSTGRES_PASSWORD: '${{ secrets.POSTGRES_PASSWORD }}'
+          POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
+          POSTGRES_PASSWORD: "${{ secrets.POSTGRES_PASSWORD }}"
           POSTGRES_DB: credential_digger_tests
           DBHOST: localhost 
           DBPORT: 5432
@@ -37,12 +37,12 @@ jobs:
         
     - name: Create PostgreSQL database
       run: |
-        PGPASSWORD='${{ secrets.POSTGRES_PASSWORD }}' psql -U '${{ secrets.POSTGRES_USER }}' -h 127.0.0.1 -p 5432 -d credential_digger_tests -f sql/create_table.sql
+        PGPASSWORD=${{ secrets.POSTGRES_PASSWORD }} psql -U "${{ secrets.POSTGRES_USER }}" -h 127.0.0.1 -p 5432 -d credential_digger_tests -f sql/create_table.sql
 
-    - name: Set up Python '${{ matrix.python-version }}'
+    - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v2
       with:
-        python-version: '${{ matrix.python-version }}'
+        python-version: ${{ matrix.python-version }}
 
     - name: Install OS dependencies
       run: |
@@ -52,9 +52,9 @@ jobs:
       uses: actions/cache@v1
       with:
         path: ~/.cache/pip # This path is specific to Ubuntu
-        key: '${{ runner.os }}'-pip-'${{ hashFiles('./requirements.txt') }}'-'${{ hashFiles('./tests/tests-requirements.txt') }}'
+        key: ${{ runner.os }}-pip-${{ hashFiles('./requirements.txt') }}-${{ hashFiles('./tests/tests-requirements.txt') }}
         restore-keys: |
-          '${{ runner.os }}'-pip-
+          ${{ runner.os }}-pip-
 
     - name: Install python dependencies
       run: |
@@ -83,8 +83,8 @@ jobs:
 
     - name: Run functional tests
       env: 
-        POSTGRES_USER: '${{ secrets.POSTGRES_USER }}'
-        POSTGRES_PASSWORD: '${{ secrets.POSTGRES_PASSWORD }}'
+        POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
+        POSTGRES_PASSWORD: "${{ secrets.POSTGRES_PASSWORD }}"
         POSTGRES_DB: credential_digger_tests
         DBHOST: localhost 
         DBPORT: 5432
